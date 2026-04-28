@@ -1,37 +1,93 @@
+# ---------------------------------------------------------------------------
 # macOS
+# ---------------------------------------------------------------------------
 .DS_Store
 .AppleDouble
 .LSOverride
+.Spotlight-V100
+.Trashes
+.fseventsd
+.TemporaryItems
+.VolumeIcon.icns
+._*
+Icon?
 
-# Build artifacts
+# ---------------------------------------------------------------------------
+# Build artifacts (Swift / Xcode / .app bundle)
+# ---------------------------------------------------------------------------
 build/
 *.app/
 *.dSYM/
 *.swiftmodule
 *.swiftdoc
+*.swiftsourceinfo
 *.o
+*.a
+DerivedData/
+.build/
+.swiftpm/
+Package.resolved
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.moved-aside
 
-# Generated sprites (regenerated from assets/kitagawaasset.jpeg via `make sprites`)
+# ---------------------------------------------------------------------------
+# Generated sprites — regenerated from assets/kitagawaasset.jpeg via `make sprites`
+# ---------------------------------------------------------------------------
 assets/sprites/
 
-# Python virtualenv
+# ---------------------------------------------------------------------------
+# Python (rembg pipeline)
+# ---------------------------------------------------------------------------
 .venv/
+venv/
+env/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+pip-log.txt
+pip-delete-this-directory.txt
 
-# rembg model cache (large ONNX files, downloaded on first run)
+# ---------------------------------------------------------------------------
+# rembg model cache (large ONNX files downloaded on first run)
+# ---------------------------------------------------------------------------
 .u2net/
 
+# ---------------------------------------------------------------------------
 # Editor / IDE
+# ---------------------------------------------------------------------------
 .idea/
 .vscode/
-*.xcodeproj/xcuserdata/
-*.xcworkspace/xcuserdata/
+.nova/
+.fleet/
+*.sublime-project
+*.sublime-workspace
+*~
+.#*
+\#*#
+.swp
+.swo
+*.bak
+*.tmp
 
-# Claude Code / OMC session state
+# ---------------------------------------------------------------------------
+# Claude Code / OMC session state (per-machine, never commit)
+# ---------------------------------------------------------------------------
 .claude/
 .omc/
 
+# ---------------------------------------------------------------------------
 # Logs / scratch
+# ---------------------------------------------------------------------------
 *.log
+logs/
 .tmp/
+tmp/

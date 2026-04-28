@@ -12,17 +12,22 @@ final class CharacterController {
     private let targetHeight: CGFloat = 200
     private let dockOffset: CGFloat = 8
 
-    // motion — slow stroll: ~one footstep per second, 18 px/s
-    private let walkSpeedPxPerSec: CGFloat = 18
+    // motion — slow stroll
+    private let walkSpeedPxPerSec: CGFloat = 24
     private let movementInterval: TimeInterval = 1.0 / 30.0
 
     // animation timing — slower transitions for a calm walk
     private let idleFrameInterval: TimeInterval = 0.30
     private let walkFrameInterval: TimeInterval = 0.45
 
-    // deterministic phase pattern: idle 3s -> left 3s -> right 3s -> repeat
-    private let phaseDuration: TimeInterval = 3.0
-    private let phaseSequence: [CharState] = [.idle, .walkLeft, .walkRight]
+    // phase pattern: idle 4s -> left 6s -> right 6s -> repeat
+    // longer walk phases so 24 px/s × 6s = 144 px of clearly visible travel.
+    private let idlePhaseDuration: TimeInterval = 4.0
+    private let walkPhaseDuration: TimeInterval = 6.0
+    // idle -> walkRight -> walkLeft. Putting walkRight first means the character
+    // departs the center going right (clearly visible) before returning via walkLeft,
+    // instead of returning-to-center being mis-read as "not moving right".
+    private let phaseSequence: [CharState] = [.idle, .walkRight, .walkLeft]
 
     // no Y bounce — pure horizontal translation feels like walking, not floating
     private let walkBobAmplitude: CGFloat = 0
@@ -33,6 +38,11 @@ final class CharacterController {
 
     private var state: CharState = .idle
     private var phaseIndex: Int = 0
+    // Precise fractional X position. NSWindow rounds origin to integer pixels
+    // when stored, so reading window.frame.origin.x and adding dx<1 each tick
+    // gets repeatedly truncated back to the same integer in one direction —
+    // we track the float position ourselves and only feed rounded ints to AppKit.
+    private var preciseX: CGFloat = 0
 
     // frame cycles per state
     //   idle: ping-pong 0->1->2->1 for natural breath
@@ -86,6 +96,7 @@ final class CharacterController {
         let scr = screenFrame()
         let x = scr.midX - displaySize.width / 2
         let y = scr.minY + dockOffset
+        preciseX = x
         window.setFrame(NSRect(origin: NSPoint(x: x, y: y), size: displaySize),
                         display: false)
     }
@@ -128,7 +139,8 @@ final class CharacterController {
 
     private func schedulePhaseTimer() {
         phaseTimer?.invalidate()
-        let t = Timer.scheduledTimer(withTimeInterval: phaseDuration, repeats: true) { [weak self] _ in
+        let dur = (state == .idle) ? idlePhaseDuration : walkPhaseDuration
+        let t = Timer.scheduledTimer(withTimeInterval: dur, repeats: false) { [weak self] _ in
             self?.advancePhase()
         }
         RunLoop.main.add(t, forMode: .common)
@@ -167,23 +179,21 @@ final class CharacterController {
         let scr = screenFrame()
         let baseY = scr.minY + dockOffset
 
-        // walking: advance x, bounce off edges by swapping direction
         if state != .idle {
             let dx = walkSpeedPxPerSec * CGFloat(movementInterval)
-            var origin = window.frame.origin
             switch state {
             case .walkLeft:
-                origin.x -= dx
-                if origin.x <= scr.minX {
-                    origin.x = scr.minX
+                preciseX -= dx
+                if preciseX <= scr.minX {
+                    preciseX = scr.minX
                     state = .walkRight
                     pingPongStep = 0
                     scheduleFrameTimer()
                 }
             case .walkRight:
-                origin.x += dx
-                if origin.x + displaySize.width >= scr.maxX {
-                    origin.x = scr.maxX - displaySize.width
+                preciseX += dx
+                if preciseX + displaySize.width >= scr.maxX {
+                    preciseX = scr.maxX - displaySize.width
                     state = .walkLeft
                     pingPongStep = 0
                     scheduleFrameTimer()
@@ -191,27 +201,23 @@ final class CharacterController {
             case .idle:
                 break
             }
-            // bob up on passing frame (legs together pose); down on stride frames
             let bob = (currentFrameIndex == 1) ? walkBobAmplitude : 0
-            origin.y = baseY + bob
-            window.setFrameOrigin(origin)
+            window.setFrameOrigin(NSPoint(x: round(preciseX), y: baseY + bob))
         } else {
-            // idle: keep firmly on the floor
-            var origin = window.frame.origin
+            // idle: keep firmly on the floor; preserve current x
+            let origin = window.frame.origin
             if origin.y != baseY {
-                origin.y = baseY
-                window.setFrameOrigin(origin)
+                window.setFrameOrigin(NSPoint(x: round(preciseX), y: baseY))
             }
         }
     }
 
     private func advancePhase() {
         phaseIndex = (phaseIndex + 1) % phaseSequence.count
-        let next = phaseSequence[phaseIndex]
-        guard next != state else { return }
-        state = next
+        state = phaseSequence[phaseIndex]
         pingPongStep = 0
         applyCurrentFrame()
         scheduleFrameTimer()
+        schedulePhaseTimer()
     }
 }

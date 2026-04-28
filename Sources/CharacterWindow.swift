@@ -22,7 +22,7 @@ final class CharacterWindow: NSPanel {
         hasShadow = false
         level = .floating
         ignoresMouseEvents = true
-        isMovable = false
+        isMovable = true
         isMovableByWindowBackground = false
         hidesOnDeactivate = false
         collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle, .fullScreenAuxiliary]
