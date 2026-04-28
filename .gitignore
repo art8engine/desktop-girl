@@ -1,0 +1,37 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Build artifacts
+build/
+*.app/
+*.dSYM/
+*.swiftmodule
+*.swiftdoc
+*.o
+
+# Generated sprites (regenerated from assets/kitagawaasset.jpeg via `make sprites`)
+assets/sprites/
+
+# Python virtualenv
+.venv/
+__pycache__/
+*.pyc
+
+# rembg model cache (large ONNX files, downloaded on first run)
+.u2net/
+
+# Editor / IDE
+.idea/
+.vscode/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# Claude Code / OMC session state
+.claude/
+.omc/
+
+# Logs / scratch
+*.log
+.tmp/
